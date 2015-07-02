@@ -1,0 +1,3 @@
+Test for adding file without git knowing it yet.
+
+(Now added change)
