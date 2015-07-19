@@ -1,0 +1,226 @@
+
+Seq_Turn_Sig_tiny85.elf:     file format elf32-avr
+
+Sections:
+Idx Name          Size      VMA       LMA       File off  Algn
+  0 .text         000000e2  00000000  00000000  00000054  2**1
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  1 .comment      00000030  00000000  00000000  00000136  2**0
+                  CONTENTS, READONLY
+  2 .debug_aranges 00000038  00000000  00000000  00000166  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  3 .debug_info   00000377  00000000  00000000  0000019e  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  4 .debug_abbrev 00000135  00000000  00000000  00000515  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  5 .debug_line   000001b8  00000000  00000000  0000064a  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  6 .debug_frame  00000054  00000000  00000000  00000804  2**2
+                  CONTENTS, READONLY, DEBUGGING
+  7 .debug_str    000001f8  00000000  00000000  00000858  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  8 .debug_ranges 00000028  00000000  00000000  00000a50  2**0
+                  CONTENTS, READONLY, DEBUGGING
+
+Disassembly of section .text:
+
+00000000 <__vectors>:
+   0:	0e c0       	rjmp	.+28     	; 0x1e <__ctors_end>
+   2:	15 c0       	rjmp	.+42     	; 0x2e <__bad_interrupt>
+   4:	14 c0       	rjmp	.+40     	; 0x2e <__bad_interrupt>
+   6:	13 c0       	rjmp	.+38     	; 0x2e <__bad_interrupt>
+   8:	12 c0       	rjmp	.+36     	; 0x2e <__bad_interrupt>
+   a:	11 c0       	rjmp	.+34     	; 0x2e <__bad_interrupt>
+   c:	10 c0       	rjmp	.+32     	; 0x2e <__bad_interrupt>
+   e:	0f c0       	rjmp	.+30     	; 0x2e <__bad_interrupt>
+  10:	0e c0       	rjmp	.+28     	; 0x2e <__bad_interrupt>
+  12:	0d c0       	rjmp	.+26     	; 0x2e <__bad_interrupt>
+  14:	0c c0       	rjmp	.+24     	; 0x2e <__bad_interrupt>
+  16:	0b c0       	rjmp	.+22     	; 0x2e <__bad_interrupt>
+  18:	0a c0       	rjmp	.+20     	; 0x2e <__bad_interrupt>
+  1a:	09 c0       	rjmp	.+18     	; 0x2e <__bad_interrupt>
+  1c:	08 c0       	rjmp	.+16     	; 0x2e <__bad_interrupt>
+
+0000001e <__ctors_end>:
+  1e:	11 24       	eor	r1, r1
+  20:	1f be       	out	0x3f, r1	; 63
+  22:	cf e5       	ldi	r28, 0x5F	; 95
+  24:	d2 e0       	ldi	r29, 0x02	; 2
+  26:	de bf       	out	0x3e, r29	; 62
+  28:	cd bf       	out	0x3d, r28	; 61
+  2a:	4e d0       	rcall	.+156    	; 0xc8 <main>
+  2c:	58 c0       	rjmp	.+176    	; 0xde <_exit>
+
+0000002e <__bad_interrupt>:
+  2e:	e8 cf       	rjmp	.-48     	; 0x0 <__vectors>
+
+00000030 <setup>:
+void setup(void)
+{
+
+ //********* Port Config *********
+
+IO_DDR |= (1 <<Segment4) | (1<<Segment3) | (1<<Segment2) | (1<<Segment1);  // set led segment control pins to "1" for output 
+  30:	87 b3       	in	r24, 0x17	; 23
+  32:	8b 61       	ori	r24, 0x1B	; 27
+  34:	87 bb       	out	0x17, r24	; 23
+IO_PORT &= ~((1 <<Segment4) | (1<<Segment3) | (1<<Segment2) | (1<<Segment1));   // turn the led segments off
+  36:	88 b3       	in	r24, 0x18	; 24
+  38:	84 7e       	andi	r24, 0xE4	; 228
+  3a:	88 bb       	out	0x18, r24	; 24
+
+IO_DDR &= ~( 1 << TS_SWITCH );   // set TS_SWITCH pin to 0 for input
+  3c:	ba 98       	cbi	0x17, 2	; 23
+IO_PORT |= ( 1 << TS_SWITCH );   // write a 1 to TS_SWITCH to enable the internal pullup
+  3e:	c2 9a       	sbi	0x18, 2	; 24
+
+GIMSK = 1<<INT0;				// Enable INT0 (input pin B2) 
+  40:	80 e4       	ldi	r24, 0x40	; 64
+  42:	8b bf       	out	0x3b, r24	; 59
+MCUCR = 1<<ISC01 | 0<<ISC00;	// Trigger INT0 on falling edge
+  44:	82 e0       	ldi	r24, 0x02	; 2
+  46:	85 bf       	out	0x35, r24	; 53
+ 
+sei();				//Enable Global Interrupt
+  48:	78 94       	sei
+  4a:	08 95       	ret
+
+0000004c <marker_light>:
+  // low intensity marker light sequencing loop
+  
+ uint8_t on_delay = 10; // delay after turn on
+ uint8_t off_delay = 100; // delay after turn off
+
+ IO_PORT |= (1<<Segment4) | (1<<Segment3) | (1<<Segment2) | (1<<Segment1);
+  4c:	88 b3       	in	r24, 0x18	; 24
+  4e:	8b 61       	ori	r24, 0x1B	; 27
+  50:	88 bb       	out	0x18, r24	; 24
+	#else
+		//round up by default
+		__ticks_dc = (uint32_t)(ceil(fabs(__tmp)));
+	#endif
+
+	__builtin_avr_delay_cycles(__ticks_dc);
+  52:	83 e0       	ldi	r24, 0x03	; 3
+  54:	8a 95       	dec	r24
+  56:	f1 f7       	brne	.-4      	; 0x54 <marker_light+0x8>
+  58:	00 00       	nop
+  _delay_us(on_delay);
+ IO_PORT &= ~((1<<Segment4) | (1<<Segment3) | (1<<Segment2) | (1<<Segment1));
+  5a:	88 b3       	in	r24, 0x18	; 24
+  5c:	84 7e       	andi	r24, 0xE4	; 228
+  5e:	88 bb       	out	0x18, r24	; 24
+  60:	81 e2       	ldi	r24, 0x21	; 33
+  62:	8a 95       	dec	r24
+  64:	f1 f7       	brne	.-4      	; 0x62 <marker_light+0x16>
+  66:	00 00       	nop
+  68:	08 95       	ret
+
+0000006a <ts_seq>:
+	uint16_t delay_between_seq = 225; // delay between segments
+	uint16_t delay_after_seq = 325; // delay between segments
+	
+	//  create the turn signal sequencing with delays between segments
+
+	IO_PORT |= (0<<Segment4) | (0<<Segment3) | (0<<Segment2) | (1<<Segment1);
+  6a:	c0 9a       	sbi	0x18, 0	; 24
+	#else
+		//round up by default
+		__ticks_dc = (uint32_t)(ceil(fabs(__tmp)));
+	#endif
+
+	__builtin_avr_delay_cycles(__ticks_dc);
+  6c:	89 eb       	ldi	r24, 0xB9	; 185
+  6e:	9b ed       	ldi	r25, 0xDB	; 219
+  70:	01 97       	sbiw	r24, 0x01	; 1
+  72:	f1 f7       	brne	.-4      	; 0x70 <ts_seq+0x6>
+  74:	00 c0       	rjmp	.+0      	; 0x76 <ts_seq+0xc>
+  76:	00 00       	nop
+	_delay_ms(delay_between_seq);
+	IO_PORT |= (0<<Segment4) | (0<<Segment3) | (1<<Segment2) | (1<<Segment1);
+  78:	88 b3       	in	r24, 0x18	; 24
+  7a:	83 60       	ori	r24, 0x03	; 3
+  7c:	88 bb       	out	0x18, r24	; 24
+  7e:	89 eb       	ldi	r24, 0xB9	; 185
+  80:	9b ed       	ldi	r25, 0xDB	; 219
+  82:	01 97       	sbiw	r24, 0x01	; 1
+  84:	f1 f7       	brne	.-4      	; 0x82 <ts_seq+0x18>
+  86:	00 c0       	rjmp	.+0      	; 0x88 <ts_seq+0x1e>
+  88:	00 00       	nop
+	_delay_ms(delay_between_seq);
+	IO_PORT |= (0<<Segment4) | (1<<Segment3) | (1<<Segment2) | (1<<Segment1);
+  8a:	88 b3       	in	r24, 0x18	; 24
+  8c:	8b 60       	ori	r24, 0x0B	; 11
+  8e:	88 bb       	out	0x18, r24	; 24
+  90:	89 eb       	ldi	r24, 0xB9	; 185
+  92:	9b ed       	ldi	r25, 0xDB	; 219
+  94:	01 97       	sbiw	r24, 0x01	; 1
+  96:	f1 f7       	brne	.-4      	; 0x94 <ts_seq+0x2a>
+  98:	00 c0       	rjmp	.+0      	; 0x9a <ts_seq+0x30>
+  9a:	00 00       	nop
+	_delay_ms(delay_between_seq);
+	IO_PORT |= (1<<Segment4) | (1<<Segment3) | (1<<Segment2) | (1<<Segment1);
+  9c:	88 b3       	in	r24, 0x18	; 24
+  9e:	8b 61       	ori	r24, 0x1B	; 27
+  a0:	88 bb       	out	0x18, r24	; 24
+  a2:	89 eb       	ldi	r24, 0xB9	; 185
+  a4:	9b ed       	ldi	r25, 0xDB	; 219
+  a6:	01 97       	sbiw	r24, 0x01	; 1
+  a8:	f1 f7       	brne	.-4      	; 0xa6 <ts_seq+0x3c>
+  aa:	00 c0       	rjmp	.+0      	; 0xac <ts_seq+0x42>
+  ac:	00 00       	nop
+	_delay_ms(delay_between_seq);
+	IO_PORT &= ~((1<<Segment4) | (1<<Segment3) | (1<<Segment2) | (1<<Segment1));
+  ae:	88 b3       	in	r24, 0x18	; 24
+  b0:	84 7e       	andi	r24, 0xE4	; 228
+  b2:	88 bb       	out	0x18, r24	; 24
+  b4:	97 ee       	ldi	r25, 0xE7	; 231
+  b6:	2d ef       	ldi	r18, 0xFD	; 253
+  b8:	80 e0       	ldi	r24, 0x00	; 0
+  ba:	91 50       	subi	r25, 0x01	; 1
+  bc:	20 40       	sbci	r18, 0x00	; 0
+  be:	80 40       	sbci	r24, 0x00	; 0
+  c0:	e1 f7       	brne	.-8      	; 0xba <ts_seq+0x50>
+  c2:	00 c0       	rjmp	.+0      	; 0xc4 <ts_seq+0x5a>
+  c4:	00 00       	nop
+  c6:	08 95       	ret
+
+000000c8 <main>:
+{
+
+//ISR(INT0_vect);
+
+
+setup();
+  c8:	b3 df       	rcall	.-154    	; 0x30 <setup>
+
+ while(1)
+ { 
+  
+  
+  bit_is_clear(TS_SWITCH_PORT, TS_SWITCH);
+  ca:	86 b3       	in	r24, 0x16	; 22
+  {
+  
+  ts_seq();
+  cc:	ce df       	rcall	.-100    	; 0x6a <ts_seq>
+  ce:	83 e2       	ldi	r24, 0x23	; 35
+  d0:	94 ef       	ldi	r25, 0xF4	; 244
+  d2:	01 97       	sbiw	r24, 0x01	; 1
+  d4:	f1 f7       	brne	.-4      	; 0xd2 <main+0xa>
+  d6:	00 c0       	rjmp	.+0      	; 0xd8 <main+0x10>
+  d8:	00 00       	nop
+  
+  }
+  
+  _delay_ms(250);
+  
+  marker_light();
+  da:	b8 df       	rcall	.-144    	; 0x4c <marker_light>
+  dc:	f6 cf       	rjmp	.-20     	; 0xca <main+0x2>
+
+000000de <_exit>:
+  de:	f8 94       	cli
+
+000000e0 <__stop_program>:
+  e0:	ff cf       	rjmp	.-2      	; 0xe0 <__stop_program>
